@@ -1,3 +1,4 @@
+use core::f32;
 use std::io::{self, Write};
 
 struct ProgrammationLineaire {
@@ -54,44 +55,95 @@ impl ProgrammationLineaire {
             base: bases,
         }
     }
+
+    // Chercher la position du pivot (le maximum du col de maximiser)
+    fn find_col_pivot(&mut self) -> usize {
+        let len = self.programme[0].len();
+
+        // let mut max = self.programme[self.nb_contraints][0];
+        let (ind, _) = self.programme[self.nb_contraints][..len - 1]
+            .iter()
+            .enumerate()
+            .max_by(|(_, val1), (_, val2)| val1.total_cmp(val2))
+            .unwrap();
+        ind
+    }
+
+    // Chercher la position du pivot (le minimum du ligne des contraintes)
+    // Retourner -1 si il n'y a que les elements negatives
+    fn find_ligne_pivot(&mut self, indice: usize) -> usize {
+        let len = self.programme[0].len();
+        let mut cand = len;
+        let mut min_div = f32::MAX;
+        for i in 0..self.nb_contraints {
+            if self.programme[i][indice] > 0. {
+                // println!(
+                //     "{}/{} = {}",
+                //     self.programme[i][self.programme[0].len() - 1],
+                //     self.programme[i][indice],
+                //     self.programme[i][self.programme[0].len() - 1] / self.programme[i][indice]
+                // );
+                if self.programme[i][len - 1] / self.programme[i][indice] < min_div {
+                    min_div = self.programme[i][len - 1] / self.programme[i][indice];
+                    cand = i;
+                }
+            }
+        }
+        cand
+    }
+
     fn solved(&mut self) {
+        let len = self.programme[0].len();
         loop {
             // find the max of the z(max) line:
-            let mut max = self.programme[self.nb_contraints][0];
-            let mut indice = 0;
-            let mut ind = 0;
-            for i in self.programme[self.nb_contraints].iter() {
-                if *i > max {
-                    max = *i;
-                    indice = ind;
-                }
-                ind += 1;
+            // let mut max = self.programme[self.nb_contraints][0];
+            // let mut indice = 0;
+            // let mut ind = 0;
+            // for i in self.programme[self.nb_contraints].iter() {
+            //     if *i > max {
+            //         max = *i;
+            //         indice = ind;
+            //     }
+            //     ind += 1;
+            // }
+
+            let indice = self.find_col_pivot();
+
+            if self.programme[self.nb_contraints][indice] <= 0. {
+                println!("La base est optimale: ({:?})", self.base);
             }
-            println!("Max is {max} with indice = {indice}");
+            // println!("Max is {max} with indice = {indice}");
 
             // choisir la base
-            let mut cand = 100;
-            let mut min_div = 100000.;
-            for i in 0..self.nb_contraints {
-                if self.programme[i][indice] > 0. {
-                    println!(
-                        "{}/{} = {}",
-                        self.programme[i][self.programme[0].len() - 1],
-                        self.programme[i][indice],
-                        self.programme[i][self.programme[0].len() - 1] / self.programme[i][indice]
-                    );
-                    if self.programme[i][self.programme[0].len() - 1] / self.programme[i][indice]
-                        < min_div
-                    {
-                        min_div = self.programme[i][self.programme[0].len() - 1]
-                            / self.programme[i][indice];
-                        cand = i;
-                    }
-                }
+            // let mut cand = 100;
+            // let mut min_div = 100000.;
+            // for i in 0..self.nb_contraints {
+            //     if self.programme[i][indice] > 0. {
+            //         println!(
+            //             "{}/{} = {}",
+            //             self.programme[i][self.programme[0].len() - 1],
+            //             self.programme[i][indice],
+            //             self.programme[i][self.programme[0].len() - 1] / self.programme[i][indice]
+            //         );
+            //         if self.programme[i][self.programme[0].len() - 1] / self.programme[i][indice]
+            //             < min_div
+            //         {
+            //             min_div = self.programme[i][self.programme[0].len() - 1]
+            //                 / self.programme[i][indice];
+            //             cand = i;
+            //         }
+            //     }
+            // }
+            // if cand == 100 {
+            //     println!("Termine, pas trouver solution optimale");
+            // }
+
+            let cand = self.find_ligne_pivot(indice);
+            if cand == len {
+                println!("z(max) = infinity");
+                break;
             }
-            if cand == 100 {
-                println!("Termine, pas trouver solution optimale");
-            }
+
             println!(
                 "Prends {} a la position ({cand},{indice})",
                 self.programme[cand][indice]
@@ -108,11 +160,12 @@ impl ProgrammationLineaire {
 
             for i in 0..self.nb_contraints + 1 {
                 let mut fois;
-                if i == self.nb_contraints {
-                    fois = max;
-                } else {
-                    fois = self.programme[i][indice];
-                }
+                // if i == self.nb_contraints {
+                //     fois = self.programme[i][indice];
+                // } else {
+                //     fois = self.programme[i][indice];
+                // }
+                fois = self.programme[i][indice];
                 for j in 0..self.programme[0].len() {
                     // if i == cand {
                     // self.programme[i][j] = self.programme[i][j] / self.programme[i][indice];
